@@ -10,7 +10,6 @@ import time
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
 ranks = (
-    "1",
     "2",
     "3",
     "4",
