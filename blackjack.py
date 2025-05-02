@@ -76,8 +76,6 @@ class Deck:
         print("Deck Reset!")
         
         
-    
-
 
 class Hand:
     def __init__(self):
@@ -105,7 +103,6 @@ class Hand:
 
 # FUNCTION DEFINITIONS:
 
-
 def hit(deck, hand):
     hand.add_card(deck.deal())
     hand.adjust_for_ace()
@@ -113,6 +110,13 @@ def hit(deck, hand):
 
 def hit_or_stand(deck, hand):
     global playing
+    
+    result = run_simulations(hand, deck)
+
+    print(f"Busts: {result['busts']}")
+    print(f"Stands: {result['stands']}")
+    print(f"Bust %: {result['bust_probability']:.2%}")
+    print(f"Stand %: {result['stand_probability']:.2%}")
 
     while True:
         x = input("\nWould you like to Hit or Stand? Enter [h/s] ")
@@ -164,6 +168,45 @@ def dealer_wins(player, dealer):
 
 def push(player, dealer):
     print("\nIts a tie!")
+    
+def run_simulations(deck, hand, simulations=1000):
+    busts = 0
+    stands = 0
+
+    # Card value lookup
+    values = {
+        "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+        "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11
+    }
+
+    for _ in range(simulations):
+        dealer_total = 0
+        simulated_total = dealer_total
+        deck_copy = current_deck[:]  # make a shallow copy to simulate on
+
+        while simulated_total < 17 and deck_copy:
+            # Pick a random card from the remaining deck
+            card = random.choice(deck_copy)
+            deck_copy.remove(card)
+
+            card_value = values[card.rank]
+            if card.rank == "A":
+                # Treat Ace as 1 if 11 would bust
+                card_value = 11 if simulated_total + 11 <= 21 else 1
+
+            simulated_total += card_value
+
+        if simulated_total > 21:
+            busts += 1
+        elif 17 <= simulated_total <= 21:
+            stands += 1
+
+    return {
+        "busts": busts,
+        "stands": stands,
+        "bust_probability": busts / simulations,
+        "stand_probability": stands / simulations
+    }
 
 
 # GAMEPLAY!
