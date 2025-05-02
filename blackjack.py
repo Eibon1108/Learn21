@@ -1,12 +1,6 @@
-########################################################## Blackjack ###########################################################
-# -*- coding: utf-8 -*-
-# Submitted by : Sheetal Bongale
-# Python script simulates a simple command-line Blackjack game implemented using Python and Object Oriented Programming concepts
-# System Requirements: Python 3.8 (Python3)
-################################################################################################################################
-
 import random
 import time
+import os
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
 ranks = (
@@ -44,7 +38,6 @@ playing = True
 
 # CLASS DEFINTIONS:
 
-
 class Card:
     def __init__(self, suit, rank):
         self.suit = suit
@@ -60,6 +53,8 @@ class Deck:
         for suit in suits:
             for rank in ranks:
                 self.deck.append(Card(suit, rank))
+                print(f"Added card: {rank} of {suit}")
+                
 
     def __str__(self):
         deck_comp = ""  # start with an empty string
@@ -72,7 +67,16 @@ class Deck:
 
     def deal(self):
         single_card = self.deck.pop()
+        print("card removed: ",single_card)
         return single_card
+    
+    def deck_reset(self):
+        self.__init__()
+        self.shuffle()
+        print("Deck Reset!")
+        
+        
+    
 
 
 class Hand:
@@ -91,6 +95,12 @@ class Hand:
         while self.value > 21 and self.aces:
             self.value -= 10
             self.aces -= 1
+            
+    def clear_hand(self):
+        self.cards.clear()
+        self.value = 0 
+        print("hand emptied, ready for dealing")
+
 
 
 # FUNCTION DEFINITIONS:
@@ -117,6 +127,7 @@ def hit_or_stand(deck, hand):
         else:
             print("Sorry, Invalid Input. Please enter [h/s].")
             continue
+        os.system('cls')
         break
 
 
@@ -156,39 +167,47 @@ def push(player, dealer):
 
 
 # GAMEPLAY!
+print("\n----------------------------------------------------------------")
+print("                ♠♣♥♦ WELCOME TO BLACKJACK! ♠♣♥♦")
+print("                          Lets Play!")
+print("----------------------------------------------------------------")
+print(
+    "Game Rules:  Get as close to 21 as you can without going over!\n\
+    Dealer hits until he/she reaches 17.\n\
+    Aces count as 1 or 11."
+)
 
+# we want to simulate rounds, not games, so i brought the deck function call outside the 
+# loop so that it stays the same across rounds 
+
+# Create & shuffle the deck, deal two cards to each player
+deck = Deck()
+deck.shuffle()
+
+player_hand = Hand()
+dealer_hand = Hand()
+rounds = 0
+    
 while True:
-    print("\n----------------------------------------------------------------")
-    print("                ♠♣♥♦ WELCOME TO BLACKJACK! ♠♣♥♦")
-    print("                          Lets Play!")
-    print("----------------------------------------------------------------")
-    print(
-        "Game Rules:  Get as close to 21 as you can without going over!\n\
-        Dealer hits until he/she reaches 17.\n\
-        Aces count as 1 or 11."
-    )
-
-    # Create & shuffle the deck, deal two cards to each player
-    deck = Deck()
-    deck.shuffle()
-
-    player_hand = Hand()
+    rounds+=1
+    print("round: ", rounds)
+    if rounds != 1:
+        player_hand.clear_hand()
+        dealer_hand.clear_hand()
+    #deck needs a function to reshuffle the deck if we're gonna do rounds
+    
     player_hand.add_card(deck.deal())
     player_hand.add_card(deck.deal())
-
-    dealer_hand = Hand()
+    
     dealer_hand.add_card(deck.deal())
     dealer_hand.add_card(deck.deal())
-
-    # Show the cards:
-    show_some(player_hand, dealer_hand)
-
-    while playing:  # recall this variable from our hit_or_stand function
-
+    
+    while playing:  # game continues as long as this is true, playing getsset to false when the game is over
+         # Show the cards:
+        show_some(player_hand, dealer_hand)  # shows the player the hands both the player and dealer has
         # Prompt for Player to Hit or Stand
-        hit_or_stand(deck, player_hand)
-        show_some(player_hand, dealer_hand)
-
+        hit_or_stand(deck, player_hand)  #in this function if you go over 21 playing gets set to false automatically 
+        
         if player_hand.value > 21:
             player_busts(player_hand, dealer_hand)
             break
@@ -225,7 +244,12 @@ while True:
     while new_game.lower() not in ["y", "n"]:
         new_game = input("Invalid Input. Please enter 'y' or 'n' ")
     if new_game[0].lower() == "y":
+        new_deck = input("\would you like a new deck?[Y/N]")
+        os.system('cls')
         playing = True
+        if new_deck[0].lower() == "y":
+            deck.deck_reset()
+            continue
         continue
     else:
         print("\n------------------------Thanks for playing!---------------------\n")
