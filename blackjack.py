@@ -53,7 +53,6 @@ class Deck:
         for suit in suits:
             for rank in ranks:
                 self.deck.append(Card(suit, rank))
-                print(f"Added card: {rank} of {suit}")
                 
 
     def __str__(self):
@@ -67,7 +66,7 @@ class Deck:
 
     def deal(self):
         single_card = self.deck.pop()
-        print("card removed: ",single_card)
+        print("card removed! ",len(self.deck), " cards left")
         return single_card
     
     def deck_reset(self):
@@ -76,7 +75,6 @@ class Deck:
         print("Deck Reset!")
         
         
-
 class Hand:
     def __init__(self):
         self.cards = []  # start with an empty list as we did in the Deck class
@@ -111,8 +109,9 @@ def hit(deck, hand):
 def hit_or_stand(deck, hand):
     global playing
     
-    result = run_simulations(hand, deck)
-
+    result = run_simulations(deck,hand.value)
+    
+    print(f"\n")
     print(f"Busts: {result['busts']}")
     print(f"Stands: {result['stands']}")
     print(f"Bust %: {result['bust_probability']:.2%}")
@@ -133,6 +132,45 @@ def hit_or_stand(deck, hand):
             continue
         os.system('cls')
         break
+    
+def run_simulations(deck, hand_value, simulations=10000):
+    current_total = hand_value
+    busts = 0
+    stands = 0
+
+    # Card value lookup
+    values = {
+        "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+        "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11
+    }
+
+    for _ in range(simulations):
+        
+        deck_copy = deck.deck[:] #make a copy of the deck 
+        if not deck_copy:
+            break  # Don't run if deck is empty
+        
+        random.shuffle(deck_copy) #added for more randomness
+        card = random.choice(deck_copy)
+
+
+        card_value = values[card.rank] #automatically revert the ace to 1 if the total crosses 21
+        if card.rank == "A":
+            card_value = 11 if current_total + 11 <= 21 else 1
+
+        new_total = current_total + card_value
+
+        if new_total > 21:    #where the bust comes from 
+            busts += 1
+        else:
+            stands += 1        #where the stands come from 
+
+    return {
+        "busts": busts,
+        "stands": stands,
+        "bust_probability": busts / simulations,
+        "stand_probability": stands / simulations
+    }
 
 
 def show_some(player, dealer):
@@ -169,44 +207,7 @@ def dealer_wins(player, dealer):
 def push(player, dealer):
     print("\nIts a tie!")
     
-def run_simulations(deck, hand, simulations=1000):
-    busts = 0
-    stands = 0
 
-    # Card value lookup
-    values = {
-        "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
-        "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11
-    }
-
-    for _ in range(simulations):
-        dealer_total = 0
-        simulated_total = dealer_total
-        deck_copy = current_deck[:]  # make a shallow copy to simulate on
-
-        while simulated_total < 17 and deck_copy:
-            # Pick a random card from the remaining deck
-            card = random.choice(deck_copy)
-            deck_copy.remove(card)
-
-            card_value = values[card.rank]
-            if card.rank == "A":
-                # Treat Ace as 1 if 11 would bust
-                card_value = 11 if simulated_total + 11 <= 21 else 1
-
-            simulated_total += card_value
-
-        if simulated_total > 21:
-            busts += 1
-        elif 17 <= simulated_total <= 21:
-            stands += 1
-
-    return {
-        "busts": busts,
-        "stands": stands,
-        "bust_probability": busts / simulations,
-        "stand_probability": stands / simulations
-    }
 
 
 # GAMEPLAY!
@@ -220,8 +221,6 @@ print(
     Aces count as 1 or 11."
 )
 
-# we want to simulate rounds, not games, so i brought the deck function call outside the 
-# loop so that it stays the same across rounds 
 
 # Create & shuffle the deck, deal two cards to each player
 deck = Deck()
@@ -233,11 +232,10 @@ rounds = 0
     
 while True:
     rounds+=1
-    print("round: ", rounds)
+    print("\nround: ", rounds)
     if rounds != 1:
         player_hand.clear_hand()
         dealer_hand.clear_hand()
-    #deck needs a function to reshuffle the deck if we're gonna do rounds
     
     player_hand.add_card(deck.deal())
     player_hand.add_card(deck.deal())
@@ -252,6 +250,9 @@ while True:
         hit_or_stand(deck, player_hand)  #in this function if you go over 21 playing gets set to false automatically 
         
         if player_hand.value > 21:
+            print("\nYour full hand:")
+            print(*player_hand.cards, sep="\n ")
+            print(f"your points are: ", player_hand.value)
             player_busts(player_hand, dealer_hand)
             break
 
@@ -287,7 +288,7 @@ while True:
     while new_game.lower() not in ["y", "n"]:
         new_game = input("Invalid Input. Please enter 'y' or 'n' ")
     if new_game[0].lower() == "y":
-        new_deck = input("\would you like a new deck?[Y/N]")
+        new_deck = input("\nwould you like a new deck?[Y/N]")
         os.system('cls')
         playing = True
         if new_deck[0].lower() == "y":
