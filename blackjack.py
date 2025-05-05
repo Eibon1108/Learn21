@@ -4,39 +4,16 @@ import os
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
 ranks = (
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-    "A",
+    "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"
 )
 values = {
-    "2": 2,
-    "3": 3,
-    "4": 4,
-    "5": 5,
-    "6": 6,
-    "7": 7,
-    "8": 8,
-    "9": 9,
-    "10": 10,
-    "J": 10,
-    "Q": 10,
-    "K": 10,
-    "A": 11,
+    "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+    "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11,
 }
 
 playing = True
 
-# CLASS DEFINTIONS:
+# -------- CLASS DEFINITIONS --------
 
 class Card:
     def __init__(self, suit, rank):
@@ -49,121 +26,73 @@ class Card:
 
 class Deck:
     def __init__(self):
-        self.deck = []  # start with an empty list
-        for suit in suits:
-            for rank in ranks:
-                self.deck.append(Card(suit, rank))
-                
+        self.deck = [Card(suit, rank) for suit in suits for rank in ranks]
 
     def __str__(self):
-        deck_comp = ""  # start with an empty string
-        for card in self.deck:
-            deck_comp += "\n " + card.__str__()  # add each Card object's print string
-        return "The deck has:" + deck_comp
+        return "The deck has:\n" + "\n ".join(str(card) for card in self.deck)
 
     def shuffle(self):
         random.shuffle(self.deck)
 
     def deal(self):
         single_card = self.deck.pop()
-        print("card removed! ",len(self.deck), " cards left")
+        print("Card removed! ", len(self.deck), " cards left")
         return single_card
-    
+
     def deck_reset(self):
         self.__init__()
         self.shuffle()
         print("Deck Reset!")
-        
-        
+
+
 class Hand:
     def __init__(self):
-        self.cards = []  # start with an empty list as we did in the Deck class
-        self.value = 0  # start with zero value
-        self.aces = 0  # add an attribute to keep track of aces
+        self.cards = []
+        self.value = 0
+        self.aces = 0
 
     def add_card(self, card):
         self.cards.append(card)
         self.value += values[card.rank]
         if card.rank == "A":
-            self.aces += 1  # add to self.aces
+            self.aces += 1
+        self.adjust_for_ace()
 
     def adjust_for_ace(self):
         while self.value > 21 and self.aces:
             self.value -= 10
             self.aces -= 1
-            
+
     def clear_hand(self):
         self.cards.clear()
-        self.value = 0 
-        print("hand emptied, ready for dealing")
+        self.value = 0
+        self.aces = 0
+        print("Hand emptied, ready for dealing")
 
 
-
-# FUNCTION DEFINITIONS:
+# -------- FUNCTION DEFINITIONS --------
 
 def hit(deck, hand):
     hand.add_card(deck.deal())
-    hand.adjust_for_ace()
 
 
-def hit_or_stand(deck, hand):
-    global playing
-    
-    result = run_simulations(deck,hand.value)
-    
-    print(f"\n")
-    print(f"Busts: {result['busts']}")
-    print(f"Stands: {result['stands']}")
-    print(f"Bust %: {result['bust_probability']:.2%}")
-    print(f"Stand %: {result['stand_probability']:.2%}")
-
-    while True:
-        x = input("\nWould you like to Hit or Stand? Enter [h/s] ")
-
-        if x[0].lower() == "h":
-            hit(deck, hand)  # hit() function defined above
-
-        elif x[0].lower() == "s":
-            print("Player stands. Dealer is playing.")
-            playing = False
-
-        else:
-            print("Sorry, Invalid Input. Please enter [h/s].")
-            continue
-        os.system('cls')
-        break
-    
-def run_simulations(deck, hand_value, simulations=10000):
-    current_total = hand_value
+def run_simulations(deck, hand_value, simulations=1000):
     busts = 0
     stands = 0
-
-    # Card value lookup
-    values = {
-        "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
-        "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11
-    }
+    remaining_deck = deck.deck[:]
 
     for _ in range(simulations):
-        
-        deck_copy = deck.deck[:] #make a copy of the deck 
-        if not deck_copy:
-            break  # Don't run if deck is empty
-        
-        random.shuffle(deck_copy) #added for more randomness
-        card = random.choice(deck_copy)
-
-
-        card_value = values[card.rank] #automatically revert the ace to 1 if the total crosses 21
-        if card.rank == "A":
-            card_value = 11 if current_total + 11 <= 21 else 1
-
-        new_total = current_total + card_value
-
-        if new_total > 21:    #where the bust comes from 
+        if not remaining_deck:
+            break
+        sim_card = random.choice(remaining_deck)
+        card_val = values[sim_card.rank]
+        if sim_card.rank == "A":
+            card_val = 11 if hand_value + 11 <= 21 else 1
+        total = hand_value + card_val
+        if total > 21:
             busts += 1
         else:
-            stands += 1        #where the stands come from 
+            stands += 1
 
     return {
         "busts": busts,
@@ -173,12 +102,35 @@ def run_simulations(deck, hand_value, simulations=10000):
     }
 
 
+def dealer_decision(deck, dealer_hand, player_score):
+    result = run_simulations(deck, dealer_hand.value)
+    print(f"\n[Dealer AI] Bust %: {result['bust_probability']:.2%}, Stand %: {result['stand_probability']:.2%}")
+    return "hit" if result["bust_probability"] < 0.4 else "stand"
+
+
+def hit_or_stand(deck, hand):
+    global playing
+    result = run_simulations(deck, hand.value)
+    print(f"\n[Player Hint] Bust %: {result['bust_probability']:.2%}, Safe %: {result['stand_probability']:.2%}")
+
+    while True:
+        x = input("Would you like to Hit or Stand? Enter [h/s] ")
+        if x[0].lower() == "h":
+            hit(deck, hand)
+        elif x[0].lower() == "s":
+            print("Player stands. Dealer is playing.")
+            playing = False
+        else:
+            print("Invalid input. Please enter [h/s].")
+            continue
+        os.system('cls' if os.name == 'nt' else 'clear')
+        break
+
+
 def show_some(player, dealer):
     print("\nPlayer's Hand:", *player.cards, sep="\n ")
     print("Player's Hand =", player.value)
-    print("\nDealer's Hand:")
-    print(" <card hidden>")
-    print("", dealer.cards[1])
+    print("\nDealer's Hand:\n <card hidden>\n", dealer.cards[1])
 
 
 def show_all(player, dealer):
@@ -188,113 +140,105 @@ def show_all(player, dealer):
     print("Dealer's Hand =", dealer.value)
 
 
-def player_busts(player, dealer):
+def player_busts():
     print("\n--- Player busts! ---")
 
 
-def player_wins(player, dealer):
-    print("\n--- Player has blackjack! You win! ---")
+def player_wins():
+    print("\n--- Player wins! ---")
 
 
-def dealer_busts(player, dealer):
-    print("\n--- Dealer busts! You win! ---")
+def dealer_busts():
+    print("\n--- Dealer busts! Player wins! ---")
 
 
-def dealer_wins(player, dealer):
+def dealer_wins():
     print("\n--- Dealer wins! ---")
 
 
-def push(player, dealer):
-    print("\nIts a tie!")
-    
+def push():
+    print("\nIt's a tie!")
 
 
+# -------- GAMEPLAY --------
 
-# GAMEPLAY!
 print("\n----------------------------------------------------------------")
 print("                ♠♣♥♦ WELCOME TO BLACKJACK! ♠♣♥♦")
-print("                          Lets Play!")
+print("                          Let's Play!")
 print("----------------------------------------------------------------")
 print(
-    "Game Rules:  Get as close to 21 as you can without going over!\n\
-    Dealer hits until he/she reaches 17.\n\
-    Aces count as 1 or 11."
+    "Game Rules: Get as close to 21 as you can without going over!\n"
+    "Dealer uses probability-based strategy.\nAces count as 1 or 11."
 )
 
-
-# Create & shuffle the deck, deal two cards to each player
 deck = Deck()
 deck.shuffle()
 
 player_hand = Hand()
 dealer_hand = Hand()
 rounds = 0
-    
+
 while True:
-    rounds+=1
-    print("\nround: ", rounds)
+    rounds += 1
+    print(f"\n--- Round {rounds} ---")
     if rounds != 1:
         player_hand.clear_hand()
         dealer_hand.clear_hand()
-    
+
     player_hand.add_card(deck.deal())
     player_hand.add_card(deck.deal())
-    
     dealer_hand.add_card(deck.deal())
     dealer_hand.add_card(deck.deal())
-    
-    while playing:  # game continues as long as this is true, playing getsset to false when the game is over
-         # Show the cards:
-        show_some(player_hand, dealer_hand)  # shows the player the hands both the player and dealer has
-        # Prompt for Player to Hit or Stand
-        hit_or_stand(deck, player_hand)  #in this function if you go over 21 playing gets set to false automatically 
-        
+
+    while playing:
+        show_some(player_hand, dealer_hand)
+        hit_or_stand(deck, player_hand)
+
         if player_hand.value > 21:
             print("\nYour full hand:")
             print(*player_hand.cards, sep="\n ")
-            print(f"your points are: ", player_hand.value)
-            player_busts(player_hand, dealer_hand)
+            print("Your points:", player_hand.value)
+            player_busts()
             break
 
-    # If Player hasn't busted, play Dealer's hand
     if player_hand.value <= 21:
+        while True:
+            decision = dealer_decision(deck, dealer_hand, player_hand.value)
+            if decision == "hit":
+                print("\nDealer decides to HIT.")
+                time.sleep(1)
+                hit(deck, dealer_hand)
+            else:
+                print("\nDealer decides to STAND.")
+                time.sleep(1)
+                break
 
-        while dealer_hand.value < 17:
-            hit(deck, dealer_hand)
-
-        # Show all cards
-        time.sleep(1)
         print("\n----------------------------------------------------------------")
         print("                     ★ Final Results ★")
         print("----------------------------------------------------------------")
-
         show_all(player_hand, dealer_hand)
 
-        # Test different winning scenarios
         if dealer_hand.value > 21:
-            dealer_busts(player_hand, dealer_hand)
-
+            dealer_busts()
         elif dealer_hand.value > player_hand.value:
-            dealer_wins(player_hand, dealer_hand)
-
+            dealer_wins()
         elif dealer_hand.value < player_hand.value:
-            player_wins(player_hand, dealer_hand)
-
+            player_wins()
         else:
-            push(player_hand, dealer_hand)
+            push()
 
-    # Ask to play again
+    # Asks to play again
     new_game = input("\nPlay another hand? [Y/N] ")
     while new_game.lower() not in ["y", "n"]:
-        new_game = input("Invalid Input. Please enter 'y' or 'n' ")
+        new_game = input("Invalid input. Please enter [y/n]: ")
+
     if new_game[0].lower() == "y":
-        new_deck = input("\nwould you like a new deck?[Y/N]")
-        os.system('cls')
+        new_deck = input("Would you like a new deck? [Y/N] ")
         playing = True
         if new_deck[0].lower() == "y":
             deck.deck_reset()
-            continue
+        os.system('cls' if os.name == 'nt' else 'clear')
         continue
     else:
-        print("\n------------------------Thanks for playing!---------------------\n")
+        print("\n------------------------ Thanks for playing! ---------------------\n")
         break
