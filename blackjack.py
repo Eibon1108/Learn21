@@ -1,12 +1,12 @@
 import random
 import time
 import os
-import openai
 from openai import OpenAI
 
-api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
 
-client = OpenAI()
+client = OpenAI(api_key="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")  # ✅ this creates the client properly
+
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
 ranks = (
@@ -194,18 +194,18 @@ Based on standard Blackjack rules (dealer must hit below 17, stand at 17+), but 
 Respond with only one letter: "h" for Hit or "s" for Stand.
 """
 
-    response = client.responses.create(
-        model = "o4-mini",
-        reasoning = {"effort": "medium"},
-        input = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a blackjack dealer."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+        max_tokens=5
     )
 
-    return (response.output_text)
+    return response.choices[0].message.content.strip().lower()
+
 
 
 
