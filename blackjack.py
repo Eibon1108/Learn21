@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from openai import OpenAI
 
-client = OpenAI(api_key="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")  # ✅ this creates the client properly
+client = OpenAI(api_key="")  # ✅ this is where the api key goes, if used will use money to run it 
 
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
