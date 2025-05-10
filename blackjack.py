@@ -1,11 +1,6 @@
 import random
 import time
 import os
-from openai import OpenAI
-
-from openai import OpenAI
-
-client = OpenAI(api_key="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")  # ✅ this creates the client properly
 
 
 suits = ("Spades ♠", "Clubs ♣", "Hearts ♥", "Diamonds ♦")
@@ -178,35 +173,6 @@ def run_simulations(deck, hand_value, simulations=10000):
         "stand_probability": stands / simulations
     }
 
-def ask_llm_dealer_move(hand_value, monte_carlo_result):
-    prompt = f"""
-You are simulating a Blackjack dealer.
-
-The dealer's current hand value is {hand_value}.
-Monte Carlo results over 10,000 simulations show:
-- Busts: {monte_carlo_result['busts']}
-- Bust Probability: {monte_carlo_result['bust_probability']:.2%}
-- Stands: {monte_carlo_result['stands']}
-- Stand Probability: {monte_carlo_result['stand_probability']:.2%}
-
-Based on standard Blackjack rules (dealer must hit below 17, stand at 17+), but feel free to use statistical advantage.
-
-Respond with only one letter: "h" for Hit or "s" for Stand.
-"""
-
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a blackjack dealer."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.2,
-        max_tokens=5
-    )
-
-    return response.choices[0].message.content.strip().lower()
-
-
 
 
 def show_some(player, dealer):
@@ -295,21 +261,9 @@ while True:
     # If Player hasn't busted, play Dealer's hand
     if player_hand.value <= 21:
 
-        # while dealer_hand.value < 17:
-        #     hit(deck, dealer_hand)
+        while dealer_hand.value < 17:
+             hit(deck, dealer_hand)
 
-        while True:
-            sim_result = run_simulations(deck, dealer_hand.value)
-            llm_decision = ask_llm_dealer_move(dealer_hand.value, sim_result)
-
-            print(f"\nDealer LLM Decision: {llm_decision}")
-
-            if llm_decision.lower() == "h":
-                hit(deck, dealer_hand)
-                if dealer_hand.value > 21:
-                    break  # dealer busted
-            else:
-                break  # dealer stands
 
         # Show all cards
         time.sleep(1)
