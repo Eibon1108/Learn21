@@ -48,9 +48,31 @@ python blackjack.py
 ## Code Layout
 
 This project uses a modular layout:
-
-### `blackjack.py`
+### 'blackjack.py'
 Contains the main game loop. Handles user interaction, round progression, and integrates other modules.
+
+### `deck`
+Contains:
+- `Card` class: Represents a playing card
+- `Deck` class: Manages a full deck (creation, shuffling, dealing, and resetting)
+
+### `hand`
+Contains:
+- `Hand` class: Represents a hand of cards. Tracks value, manages aces, and can reset between rounds.
+
+### `game functions`
+Contains utility functions for gameplay:
+- `hit_or_stand`, `hit`, `show_some`, `show_all`
+- Win/loss message functions: `player_busts`, `dealer_busts`, `dealer_wins`, `player_wins`, `push`
+
+### `monte_carlo.py`
+Runs simulations to estimate the risk of busting:
+- `run_simulations(deck, hand_value)` returns bust/stand probabilities
+
+### `dealer_ai.py`
+Handles the AI decision logic using OpenAI's GPT:
+- `ask_llm_dealer_move(hand_value, sim_result)` returns "h" or "s" based on statistical insight
+
 
 ## How It Works
 
