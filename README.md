@@ -33,7 +33,7 @@ cd learn21
 pip install openai
 ```
 
-3. Replace the placeholder API key in `dealer_ai.py` with your actual OpenAI key:
+3. Replace the placeholder API key in `blackjack.py` with your actual OpenAI key:
 
 ```python
 client = OpenAI(api_key="sk-...")
@@ -42,37 +42,15 @@ client = OpenAI(api_key="sk-...")
 4. Run the game:
 
 ```bash
-python main.py
+python blackjack.py
 ```
 
 ## Code Layout
 
 This project uses a modular layout:
 
-### `main.py`
+### `blackjack.py`
 Contains the main game loop. Handles user interaction, round progression, and integrates other modules.
-
-### `deck.py`
-Contains:
-- `Card` class: Represents a playing card
-- `Deck` class: Manages a full deck (creation, shuffling, dealing, and resetting)
-
-### `hand.py`
-Contains:
-- `Hand` class: Represents a hand of cards. Tracks value, manages aces, and can reset between rounds.
-
-### `gameplay.py`
-Contains utility functions for gameplay:
-- `hit_or_stand`, `hit`, `show_some`, `show_all`
-- Win/loss message functions: `player_busts`, `dealer_busts`, `dealer_wins`, `player_wins`, `push`
-
-### `monte_carlo.py`
-Runs simulations to estimate the risk of busting:
-- `run_simulations(deck, hand_value)` returns bust/stand probabilities
-
-### `dealer_ai.py`
-Handles the AI decision logic using OpenAI's GPT:
-- `ask_llm_dealer_move(hand_value, sim_result)` returns "h" or "s" based on statistical insight
 
 ## How It Works
 
